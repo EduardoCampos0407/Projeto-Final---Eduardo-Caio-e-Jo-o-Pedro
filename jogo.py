@@ -110,11 +110,13 @@ def rotacionar_vertices(lista_vertices, vezes):
         resultado = novo
     return resultado
 
+SEP = 5
+
+
 def layout_retangulo():
-    """Circuito em formato retangular com uma saliencia."""
     w    = random.randint(8, 12)
     h    = random.randint(5, 8)
-    bump = random.randint(1, 2)
+    bump = random.randint(2, 3)
     lado = random.choice(["top", "bottom", "left", "right"])
 
     if lado == "top":
@@ -141,25 +143,28 @@ def layout_retangulo():
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
+
 def layout_U():
-    """Circuito em formato de U."""
-    w  = random.randint(7, 10)
-    h  = random.randint(6,  9)
-    bw = random.randint(2,  3)
+    w  = random.randint(10, 14)
+    h  = random.randint(8,  12)
+    bw = SEP + random.randint(1, 2)
 
     vertices = [
-        (0, 0), (bw, 0), (bw, h-1), (w-bw, h-1),
-        (w-bw, 0), (w, 0), (w, h), (0, h)
+        (0, 0), (bw, 0), (bw, h - SEP),
+        (w - bw, h - SEP), (w - bw, 0),
+        (w, 0), (w, h), (0, h)
     ]
+    rotacao  = random.choice([0, 1, 2, 3])
+    vertices = rotacionar_vertices(vertices, rotacao)
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
+
 def layout_L():
-    """Circuito em formato de L."""
     w  = random.randint(8, 12)
     h  = random.randint(6,  9)
-    bw = random.randint(2,  4)
-    bh = random.randint(2,  4)
+    bw = SEP + random.randint(1, 2)
+    bh = SEP + random.randint(1, 2)
 
     vertices = [
         (0, 0), (w, 0), (w, bh), (bw, bh), (bw, h), (0, h)
@@ -169,15 +174,15 @@ def layout_L():
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
+
 def layout_S():
-    """Circuito em formato de S."""
-    w  = random.randint(6,  9)
-    h  = random.randint(3,  5)
-    dx = random.randint(2,  4)
+    w  = random.randint(6, 9)
+    h  = SEP + random.randint(2, 3)
+    dx = SEP + random.randint(2, 4)
 
     vertices = [
-        (0, 0), (w, 0), (w, h), (w+dx, h),
-        (w+dx, h*2), (dx, h*2), (dx, h), (0, h)
+        (0, 0), (w, 0), (w, h), (w + dx, h),
+        (w + dx, h * 2), (dx, h * 2), (dx, h), (0, h)
     ]
     if random.choice([True, False]):
         espelhado = []
@@ -188,49 +193,33 @@ def layout_S():
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
-def layout_espiral():
-    """Circuito em espiral quadrada."""
-    gap = random.randint(2, 3)
-    s   = gap
+
+def layout_Z():
+    w  = random.randint(8, 12)
+    h  = random.randint(5,  8)
+    dy = SEP + random.randint(2, 4)
 
     vertices = [
-        (0,    0),
-        (6*s,  0),
-        (6*s,  5*s),
-        (s,    5*s),
-        (s,    s),
-        (5*s,  s),
-        (5*s,  4*s),
-        (2*s,  4*s),
-        (2*s,  2*s),
-        (4*s,  2*s),
-        (4*s,  3*s),
-        (3*s,  3*s),
+        (0, 0), (w, 0), (w, dy),
+        (w + SEP, dy), (w + SEP, dy + h),
+        (0, dy + h), (0, dy),
+        (-SEP, dy), (-SEP, 0)
     ]
-
-    vistos = []
-    sem_dup = []
-    for v in vertices:
-        if v not in vistos:
-            vistos.append(v)
-            sem_dup.append(v)
-    vertices = sem_dup
-
+    rotacao  = random.choice([0, 1, 2, 3])
+    vertices = rotacionar_vertices(vertices, rotacao)
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
-def layout_T():
-    """Circuito em formato de T."""
+
+def layout_C():
     w  = random.randint(8, 12)
-    h  = random.randint(5,  8)
-    tw = random.randint(2,  3)
-    th = random.randint(2,  3)
-    cx = w // 2
+    h  = random.randint(8, 12)
+    bw = SEP + random.randint(1, 2)
+    bh = SEP + random.randint(1, 2)
 
     vertices = [
-        (0, th), (cx-tw, th), (cx-tw, 0),
-        (cx+tw, 0), (cx+tw, th), (w, th),
-        (w, h), (0, h)
+        (bw, 0), (w, 0), (w, h), (bw, h),
+        (bw, h - bh), (0, h - bh), (0, bh), (bw, bh)
     ]
     rotacao  = random.choice([0, 1, 2, 3])
     vertices = rotacionar_vertices(vertices, rotacao)
@@ -238,7 +227,6 @@ def layout_T():
     return vertices_para_segmentos(vertices)
 
 def gerar_circuito():
-    """Escolhe aleatoriamente um dos layouts de circuito."""
     numero = random.randint(0, 5)
     if numero == 0:
         return layout_retangulo()
@@ -249,9 +237,9 @@ def gerar_circuito():
     elif numero == 3:
         return layout_S()
     elif numero == 4:
-        return layout_espiral()
+        return layout_Z()
     else:
-        return layout_T()
+        return layout_C()
 
 def segmentos_para_pontos(segmentos):
     """Expande lista de segmentos em lista densa de pontos."""
@@ -592,85 +580,80 @@ class Carro(pygame.sprite.Sprite):
     def __init__(self, segmentos):
         pygame.sprite.Sprite.__init__(self)
 
-        self.segmentos   = segmentos
-        self.pontos      = segmentos_para_pontos(segmentos)
+        self.segmentos    = segmentos
+        self.pontos       = segmentos_para_pontos(segmentos)
         self.total_pontos = len(self.pontos)
-        self.indice      = 0
-        self.progresso   = 0.0
+        self.indice       = 0
+        self.progresso    = 0.0
 
-        self.vel_base   = 28.0
-        self.velocidade = self.vel_base
+        self.vel_base    = 28.0
+        self.velocidade  = self.vel_base
 
-        self.faixa    = 1
-        self.off_alvo = 0.0
-        self.off_real = 0.0
+        self.faixa       = 1
+        self.faixa_real  = 1.0
 
-        self.angulo = 0.0
-
+        self.angulo      = 0.0
         self.pontuacao   = 0
         self.metros_acum = 0.0
         self.voltas      = 0
+        self.vel_kmh_real  = 0
+        self.metros_ultimo = 0.0
 
-        self.x = self.pontos[0][0]
-        self.y = self.pontos[0][1]
+        # Pre-calcula pontos das 3 faixas com offset ja aplicado
+        # Assim cada faixa tem sua propria trajetoria suave, identica a central
+        offsets = [-LARGURA_FAIXA, 0.0, LARGURA_FAIXA]
+        self.pontos_faixa = []
+        n = self.total_pontos
+        for off in offsets:
+            lista = []
+            for i in range(n):
+                p1 = self.pontos[i]
+                p2 = self.pontos[(i + 1) % n]
+                dx = p2[0] - p1[0]
+                dy = p2[1] - p1[1]
+                comp = math.hypot(dx, dy)
+                if comp > 0:
+                    nx = -dy / comp
+                    ny =  dx / comp
+                else:
+                    nx = 0.0
+                    ny = 0.0
+                lista.append((p1[0] + nx * off, p1[1] + ny * off))
+            self.pontos_faixa.append(lista)
+
+        self.x = self.pontos_faixa[1][0][0]
+        self.y = self.pontos_faixa[1][0][1]
 
         self.angulos_pista = []
-        for i in range(self.total_pontos):
+        for i in range(n):
             p1 = self.pontos[i]
-            p2 = self.pontos[(i + 1) % self.total_pontos]
+            p2 = self.pontos[(i + 1) % n]
             dx = p2[0] - p1[0]
             dy = p2[1] - p1[1]
             ang = math.degrees(math.atan2(-dy, dx))
             self.angulos_pista.append(ang)
 
-    def calcular_curvatura(self):
-        """Retorna a variacao de angulo nos proximos pontos."""
-        look = 15
-        a0   = self.angulos_pista[self.indice]
-        a1   = self.angulos_pista[(self.indice + look) % self.total_pontos]
-        diff = (a1 - a0 + 180) % 360 - 180
-        return diff
-
     def mudar_faixa(self, direcao):
-        """Move o carro uma faixa para a esquerda ou direita."""
         nova_faixa = self.faixa + direcao
         if nova_faixa < 0:
             nova_faixa = 0
         if nova_faixa > 2:
             nova_faixa = 2
-        self.faixa    = nova_faixa
-        self.off_alvo = (self.faixa - 1) * LARGURA_FAIXA
+        self.faixa = nova_faixa
 
     def update(self):
-        """Atualiza posicao, faixa e pontuacao do carro."""
         n = self.total_pontos
 
-        curvatura = self.calcular_curvatura()
-        em_curva  = abs(curvatura) > 8
-        FRAMES_TRANSICAO = 10
-
-        distancia_restante = abs(self.off_alvo - self.off_real)
-        if distancia_restante > 0.5:
-            if em_curva:
-                fator_base = 1.0 / FRAMES_TRANSICAO
-                if curvatura > 0:
-                    multiplicadores = [0.6, 1.0, 1.6]
-                else:
-                    multiplicadores = [1.6, 1.0, 0.6]
-                multiplicador = multiplicadores[self.faixa]
-                fator = fator_base * multiplicador
-                if fator > 0.35:
-                    fator = 0.35
-            else:
-                fator = 1.0 / FRAMES_TRANSICAO
-            self.off_real = self.off_real + (self.off_alvo - self.off_real) * fator
-        else:
-            self.off_real = self.off_alvo
+        self.faixa_real = self.faixa_real + (self.faixa - self.faixa_real) * 0.12
 
         passo = self.velocidade / 60.0
+        metros_antes     = self.metros_acum
         self.metros_acum = self.metros_acum + passo * 5.0 / 50.0
         self.pontuacao   = int(self.metros_acum)
         self.progresso   = self.progresso + passo
+
+        metros_neste_frame = self.metros_acum - metros_antes
+        self.vel_kmh_real  = int(metros_neste_frame * FPS * 3.6)
 
         while self.progresso >= 1.0:
             self.progresso = self.progresso - 1.0
@@ -679,31 +662,63 @@ class Carro(pygame.sprite.Sprite):
                 self.voltas     = self.voltas + 1
                 self.velocidade = self.vel_base + self.voltas * 3.0
 
+        idx_a = self.indice
+        idx_b = (self.indice + 1) % n
+        t     = self.progresso
+
+        # Detecta curvatura a frente
+        look       = 12
+        ang_atual  = self.angulos_pista[self.indice]
+        ang_frente = self.angulos_pista[(self.indice + look) % n]
+        diff_curva = (ang_frente - ang_atual + 180) % 360 - 180
+        em_curva   = abs(diff_curva) > 15
+
+        # Em curva: segue diretamente os pontos da faixa destino (sem interpolacao)
+        # Isso garante que o carro nunca sai dos limites de sua faixa
+        if em_curva:
+            faixa_idx = int(round(self.faixa_real))
+            if faixa_idx < 0:
+                faixa_idx = 0
+            if faixa_idx > 2:
+                faixa_idx = 2
+            pa = self.pontos_faixa[faixa_idx][idx_a]
+            pb = self.pontos_faixa[faixa_idx][idx_b]
+            cx = pa[0] + (pb[0] - pa[0]) * t
+            cy = pa[1] + (pb[1] - pa[1]) * t
+        else:
+            # Em reta: interpola suavemente entre faixas (troca de faixa fluida)
+            if self.faixa_real <= 1.0:
+                t_f  = self.faixa_real
+                pa_a = self.pontos_faixa[0][idx_a]
+                pb_a = self.pontos_faixa[0][idx_b]
+                pa_b = self.pontos_faixa[1][idx_a]
+                pb_b = self.pontos_faixa[1][idx_b]
+            else:
+                t_f  = self.faixa_real - 1.0
+                pa_a = self.pontos_faixa[1][idx_a]
+                pb_a = self.pontos_faixa[1][idx_b]
+                pa_b = self.pontos_faixa[2][idx_a]
+                pb_b = self.pontos_faixa[2][idx_b]
+
+            cx_a = pa_a[0] + (pb_a[0] - pa_a[0]) * t
+            cy_a = pa_a[1] + (pb_a[1] - pa_a[1]) * t
+            cx_b = pa_b[0] + (pb_b[0] - pa_b[0]) * t
+            cy_b = pa_b[1] + (pb_b[1] - pa_b[1]) * t
+            cx   = cx_a + (cx_b - cx_a) * t_f
+            cy   = cy_a + (cy_b - cy_a) * t_f
+
         p1 = self.pontos[self.indice]
         p2 = self.pontos[(self.indice + 1) % n]
-        t  = self.progresso
-
-        cx = p1[0] + (p2[0] - p1[0]) * t
-        cy = p1[1] + (p2[1] - p1[1]) * t
         dx = p2[0] - p1[0]
         dy = p2[1] - p1[1]
-
-        angulo_alvo  = math.degrees(math.atan2(-dy, dx))
-        diff_angulo  = (angulo_alvo - self.angulo + 180) % 360 - 180
-        self.angulo  = self.angulo + diff_angulo * 0.18
-
-        comprimento = math.hypot(dx, dy)
-        if comprimento > 0:
-            nx = -dy / comprimento
-            ny =  dx / comprimento
-            cx = cx + nx * self.off_real
-            cy = cy + ny * self.off_real
+        angulo_alvo = math.degrees(math.atan2(-dy, dx))
+        diff_angulo = (angulo_alvo - self.angulo + 180) % 360 - 180
+        self.angulo = self.angulo + diff_angulo * 0.18
 
         self.x = cx
         self.y = cy
 
     def desenhar(self, superficie, cam_x, cam_y):
-        """Desenha o sprite do carro rotacionado na direcao correta."""
         sx, sy = aplicar_camera(self.x, self.y, cam_x, cam_y)
         rotacionado = pygame.transform.rotate(imagem_carro, self.angulo)
         rect = rotacionado.get_rect()
@@ -712,15 +727,15 @@ class Carro(pygame.sprite.Sprite):
         superficie.blit(rotacionado, rect)
 
 def desenhar_hud(superficie, carro):
-    """Desenha velocidade, volta, pontuacao e indicador de faixa."""
     painel = pygame.Surface((140, 62), pygame.SRCALPHA)
     painel.fill((0, 0, 0, 160))
     superficie.blit(painel, (6, 6))
 
-    pct     = (carro.velocidade - carro.vel_base) / carro.vel_base
-    vel_kmh = int(150 + pct * 300)
+    if carro.vel_kmh_real == 0:
+        texto_vel = fonte_grande.render("  -- km/h", True, (255, 220, 0))
+    else:
+        texto_vel = fonte_grande.render("  " + str(carro.vel_kmh_real) + " km/h", True, (255, 220, 0))
 
-    texto_vel   = fonte_grande.render("  " + str(vel_kmh) + " km/h", True, (255, 220, 0))
     texto_volta = fonte_media.render("  Volta: " + str(carro.voltas + 1), True, (255, 255, 255))
     texto_pts   = fonte_media.render("  " + str(carro.pontuacao) + " metros", True, (255, 255, 255))
 
@@ -750,78 +765,270 @@ def desenhar_game_over(superficie, pontuacao, voltas):
     fonte_gm = pygame.font.SysFont("Arial", 20, bold=True)
     fonte_gp = pygame.font.SysFont("Arial", 14)
 
-    t1 = fonte_go.render("GAME OVER",                   True, (220, 30,  30))
-    t2 = fonte_gm.render(str(pontuacao) + " metros",    True, (255, 255, 255))
-    t3 = fonte_gm.render("Voltas: " + str(voltas),      True, (255, 255, 255))
-    t4 = fonte_gp.render("R = novo jogo   Q = sair",    True, (180, 180, 180))
+    t1 = fonte_go.render("GAME OVER",                      True, (220, 30,  30))
+    t2 = fonte_gm.render(str(pontuacao) + " metros",       True, (255, 255, 255))
+    t3 = fonte_gm.render("Voltas: " + str(voltas),         True, (255, 255, 255))
+    t4 = fonte_gp.render("R = jogar de novo   M = menu",   True, (180, 180, 180))
 
     superficie.blit(t1, (VIRT_W // 2 - t1.get_width() // 2, VIRT_H // 2 - 75))
     superficie.blit(t2, (VIRT_W // 2 - t2.get_width() // 2, VIRT_H // 2 - 20))
     superficie.blit(t3, (VIRT_W // 2 - t3.get_width() // 2, VIRT_H // 2 + 10))
     superficie.blit(t4, (VIRT_W // 2 - t4.get_width() // 2, VIRT_H // 2 + 50))
 
-segmentos  = gerar_circuito()
-carro      = Carro(segmentos)
-obstaculos = gerar_obstaculos(carro.pontos, voltas=0)
+maior_recorde     = 0
+tela_atual        = "menu"
+vel_inicial_kmh   = 10
+ambiente_escolhido = "Aleatorio"
+ambiente_atual     = "Terra"
+
+OPCOES_VELOCIDADE  = [10, 14, 18, 22]
+OPCOES_AMBIENTE    = ["Aleatorio", "Terra", "Mar", "Lua", "Marte"]
+
+CORES_AMBIENTE = {
+    "Terra": (25,  150, 48),
+    "Mar":   (20,  60,  140),
+    "Lua":   (130, 130, 130),
+    "Marte": (201, 73,  50),
+}
+
+
+def kmh_para_vel_base(kmh):
+    return kmh * 2.8
+
+
+def sortear_ambiente():
+    opcoes = ["Terra", "Mar", "Lua", "Marte"]
+    return random.choice(opcoes)
+
+
+segmentos  = None
+carro      = None
+obstaculos = None
 game_over  = False
 voltas_ant = 0
+cam_x      = 0
+cam_y      = 0
 
-cam_x = carro.x - VIRT_W // 2
-cam_y = carro.y - VIRT_H // 2
+
+def iniciar_partida():
+    global segmentos, carro, obstaculos, game_over, voltas_ant, cam_x, cam_y, ambiente_atual
+    segmentos  = gerar_circuito()
+    carro      = Carro(segmentos)
+    carro.vel_base   = kmh_para_vel_base(vel_inicial_kmh)
+    carro.velocidade = carro.vel_base
+    obstaculos = gerar_obstaculos(carro.pontos, voltas=0)
+    game_over  = False
+    voltas_ant = 0
+    cam_x      = carro.x - VIRT_W // 2
+    cam_y      = carro.y - VIRT_H // 2
+    if ambiente_escolhido == "Aleatorio":
+        ambiente_atual = sortear_ambiente()
+    else:
+        ambiente_atual = ambiente_escolhido
+
+
+def desenhar_botao(superficie, texto, cx, cy, largura, altura, fonte):
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    rect = pygame.Rect(cx - largura // 2, cy - altura // 2, largura, altura)
+    if rect.collidepoint(mouse_x, mouse_y):
+        cor_fundo = (80, 80, 160)
+    else:
+        cor_fundo = (40, 40, 100)
+    pygame.draw.rect(superficie, cor_fundo, rect, border_radius=10)
+    pygame.draw.rect(superficie, (150, 150, 255), rect, 2, border_radius=10)
+    label = fonte.render(texto, True, (255, 255, 255))
+    superficie.blit(label, (cx - label.get_width() // 2, cy - label.get_height() // 2))
+    return rect
+
+
+def desenhar_menu(superficie):
+    superficie.fill((20, 20, 40))
+
+    fonte_titulo  = pygame.font.SysFont("Arial", 48, bold=True)
+    fonte_botao   = pygame.font.SysFont("Arial", 26, bold=True)
+    fonte_recorde = pygame.font.SysFont("Arial", 18)
+
+    titulo = fonte_titulo.render("Corrida Insana!", True, (255, 220, 0))
+    superficie.blit(titulo, (WIDTH // 2 - titulo.get_width() // 2, 120))
+
+    recorde_texto = fonte_recorde.render("Maior recorde: " + str(maior_recorde) + " metros", True, (180, 180, 180))
+    superficie.blit(recorde_texto, (WIDTH // 2 - recorde_texto.get_width() // 2, 210))
+
+    rect_iniciar  = desenhar_botao(superficie, "Iniciar Partida", WIDTH // 2, 330, 280, 55, fonte_botao)
+    rect_config   = desenhar_botao(superficie, "Configuracoes",   WIDTH // 2, 410, 280, 55, fonte_botao)
+    rect_fechar   = desenhar_botao(superficie, "Fechar Jogo",     WIDTH // 2, 490, 280, 55, fonte_botao)
+
+    return rect_iniciar, rect_config, rect_fechar
+
+
+def desenhar_configuracoes(superficie):
+    global vel_inicial_kmh, ambiente_escolhido
+
+    superficie.fill((20, 20, 40))
+
+    fonte_titulo = pygame.font.SysFont("Arial", 36, bold=True)
+    fonte_label  = pygame.font.SysFont("Arial", 22, bold=True)
+    fonte_opcao  = pygame.font.SysFont("Arial", 18)
+    fonte_voltar = pygame.font.SysFont("Arial", 22, bold=True)
+
+    titulo = fonte_titulo.render("Configuracoes", True, (255, 220, 0))
+    superficie.blit(titulo, (WIDTH // 2 - titulo.get_width() // 2, 50))
+
+    label_vel = fonte_label.render("Velocidade inicial:", True, (255, 255, 255))
+    superficie.blit(label_vel, (WIDTH // 2 - label_vel.get_width() // 2, 120))
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    retangulos_vel = []
+    total   = len(OPCOES_VELOCIDADE)
+    espaco  = 100
+    inicio_x = WIDTH // 2 - (total * espaco) // 2 + espaco // 2
+
+    for i in range(total):
+        kmh  = OPCOES_VELOCIDADE[i]
+        cx   = inicio_x + i * espaco
+        cy   = 190
+        rect = pygame.Rect(cx - 38, cy - 25, 76, 50)
+
+        if kmh == vel_inicial_kmh:
+            cor_fundo = (100, 180, 100)
+            cor_borda = (200, 255, 200)
+        elif rect.collidepoint(mouse_x, mouse_y):
+            cor_fundo = (80, 80, 160)
+            cor_borda = (150, 150, 255)
+        else:
+            cor_fundo = (40, 40, 100)
+            cor_borda = (100, 100, 200)
+
+        pygame.draw.rect(superficie, cor_fundo, rect, border_radius=8)
+        pygame.draw.rect(superficie, cor_borda, rect, 2, border_radius=8)
+        texto = fonte_opcao.render(str(kmh) + " km/h", True, (255, 255, 255))
+        superficie.blit(texto, (cx - texto.get_width() // 2, cy - texto.get_height() // 2))
+        retangulos_vel.append((rect, kmh))
+
+    label_amb = fonte_label.render("Ambiente:", True, (255, 255, 255))
+    superficie.blit(label_amb, (WIDTH // 2 - label_amb.get_width() // 2, 270))
+
+    retangulos_amb = []
+    total_amb  = len(OPCOES_AMBIENTE)
+    espaco_amb = 160
+    inicio_amb = WIDTH // 2 - (total_amb * espaco_amb) // 2 + espaco_amb // 2
+
+    for i in range(total_amb):
+        nome = OPCOES_AMBIENTE[i]
+        cx   = inicio_amb + i * espaco_amb
+        cy   = 340
+        rect = pygame.Rect(cx - 68, cy - 25, 136, 50)
+
+        if nome == ambiente_escolhido:
+            cor_fundo = (100, 180, 100)
+            cor_borda = (200, 255, 200)
+        elif rect.collidepoint(mouse_x, mouse_y):
+            cor_fundo = (80, 80, 160)
+            cor_borda = (150, 150, 255)
+        else:
+            if nome in CORES_AMBIENTE:
+                r, g, b   = CORES_AMBIENTE[nome]
+                cor_fundo = (r // 2, g // 2, b // 2)
+            else:
+                cor_fundo = (40, 40, 100)
+            cor_borda = (100, 100, 200)
+
+        pygame.draw.rect(superficie, cor_fundo, rect, border_radius=8)
+        pygame.draw.rect(superficie, cor_borda, rect, 2, border_radius=8)
+        texto = fonte_opcao.render(nome, True, (255, 255, 255))
+        superficie.blit(texto, (cx - texto.get_width() // 2, cy - texto.get_height() // 2))
+        retangulos_amb.append((rect, nome))
+
+    rect_voltar = desenhar_botao(superficie, "Voltar ao Menu", WIDTH // 2, 460, 280, 55, fonte_voltar)
+
+    return retangulos_vel, retangulos_amb, rect_voltar
+
 
 jogo_rodando = True
 
 while jogo_rodando:
     dt = clock.tick(FPS) / 1000.0
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            jogo_rodando = False
+    if tela_atual == "menu":
+        rect_iniciar, rect_config, rect_fechar = desenhar_menu(window)
+        pygame.display.update()
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_q:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                jogo_rodando = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if rect_iniciar.collidepoint(event.pos):
+                        iniciar_partida()
+                        tela_atual = "jogo"
+                    if rect_config.collidepoint(event.pos):
+                        tela_atual = "configuracoes"
+                    if rect_fechar.collidepoint(event.pos):
+                        jogo_rodando = False
+
+    elif tela_atual == "configuracoes":
+        retangulos_vel, retangulos_amb, rect_voltar = desenhar_configuracoes(window)
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                jogo_rodando = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    for rect, kmh in retangulos_vel:
+                        if rect.collidepoint(event.pos):
+                            vel_inicial_kmh = kmh
+                    for rect, nome in retangulos_amb:
+                        if rect.collidepoint(event.pos):
+                            ambiente_escolhido = nome
+                    if rect_voltar.collidepoint(event.pos):
+                        tela_atual = "menu"
+
+    elif tela_atual == "jogo":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 jogo_rodando = False
 
-            if event.key == pygame.K_r:
-                segmentos  = gerar_circuito()
-                carro      = Carro(segmentos)
-                obstaculos = gerar_obstaculos(carro.pontos, voltas=0)
-                game_over  = False
-                voltas_ant = 0
-                cam_x = carro.x - VIRT_W // 2
-                cam_y = carro.y - VIRT_H // 2
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r and game_over:
+                    iniciar_partida()
 
-            if game_over == False:
-                if event.key == pygame.K_a:
-                    carro.mudar_faixa(-1)
-                if event.key == pygame.K_d:
-                    carro.mudar_faixa(+1)
+                if event.key == pygame.K_m and game_over:
+                    tela_atual = "menu"
 
-    if game_over == False:
-        carro.update()
+                if game_over == False:
+                    if event.key == pygame.K_a:
+                        carro.mudar_faixa(-1)
+                    if event.key == pygame.K_d:
+                        carro.mudar_faixa(+1)
 
-        cam_x = cam_x + (carro.x - VIRT_W // 2 - cam_x) * 0.10
-        cam_y = cam_y + (carro.y - VIRT_H // 2 - cam_y) * 0.10
+        if game_over == False:
+            carro.update()
 
-        atualizar_obstaculos(obstaculos, dt)
+            cam_x = cam_x + (carro.x - VIRT_W // 2 - cam_x) * 0.10
+            cam_y = cam_y + (carro.y - VIRT_H // 2 - cam_y) * 0.10
 
-        if carro.voltas > voltas_ant:
-            voltas_ant = carro.voltas
-            obstaculos = gerar_obstaculos(carro.pontos, voltas=carro.voltas)
+            atualizar_obstaculos(obstaculos, dt)
 
-        if verificar_colisao(carro.x, carro.y, carro.indice, carro.pontos, obstaculos):
-            game_over = True
+            if carro.voltas > voltas_ant:
+                voltas_ant = carro.voltas
+                obstaculos = gerar_obstaculos(carro.pontos, voltas=carro.voltas)
 
-    virtual.fill(COR_GRAMA)
-    desenhar_pista(virtual, segmentos, cam_x, cam_y)
-    desenhar_obstaculos(virtual, carro.pontos, obstaculos, cam_x, cam_y)
-    carro.desenhar(virtual, cam_x, cam_y)
-    desenhar_hud(virtual, carro)
+            if verificar_colisao(carro.x, carro.y, carro.indice, carro.pontos, obstaculos):
+                game_over = True
+                if carro.pontuacao > maior_recorde:
+                    maior_recorde = carro.pontuacao
 
-    if game_over:
-        desenhar_game_over(virtual, carro.pontuacao, carro.voltas)
+        virtual.fill(CORES_AMBIENTE[ambiente_atual])
+        desenhar_pista(virtual, segmentos, cam_x, cam_y)
+        desenhar_obstaculos(virtual, carro.pontos, obstaculos, cam_x, cam_y)
+        carro.desenhar(virtual, cam_x, cam_y)
+        desenhar_hud(virtual, carro)
 
-    pygame.transform.scale(virtual, (WIDTH, HEIGHT), window)
-    pygame.display.update()
+        if game_over:
+            desenhar_game_over(virtual, carro.pontuacao, carro.voltas)
+
+        pygame.transform.scale(virtual, (WIDTH, HEIGHT), window)
+        pygame.display.update()
 
 pygame.quit()
