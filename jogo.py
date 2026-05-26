@@ -1,3 +1,8 @@
+# =====================================================================
+# INICIALIZACAO
+# Configura a janela, a superficie virtual (usada para o zoom 2x),
+# o relogio de frames, os sprites, a musica e as fontes do jogo.
+# =====================================================================
 import pygame
 import math
 import random
@@ -17,41 +22,49 @@ virtual = pygame.Surface((VIRT_W, VIRT_H))
 clock = pygame.time.Clock()
 FPS   = 60
 
-CARRO_W    = 34
-CARRO_H    = 17
-OBST_W     = 28
-OBST_H     = 28
+CARRO_W = 34
+CARRO_H = 17
+OBST_W  = 28
+OBST_H  = 28
 
-imagem_carro         = pygame.image.load("Carro.png").convert_alpha()
-imagem_carro         = pygame.transform.scale(imagem_carro, (CARRO_W, CARRO_H))
-imagem_obstaculo     = pygame.image.load("Obstaculo.png").convert_alpha()
-imagem_obstaculo     = pygame.transform.scale(imagem_obstaculo, (OBST_W, OBST_H))
-imagem_obs_movel     = pygame.image.load("Obstaculo_movel.png").convert_alpha()
-imagem_obs_movel     = pygame.transform.scale(imagem_obs_movel, (OBST_W, OBST_H))
-imagem_alien         = pygame.image.load("Alien.png").convert_alpha()
-imagem_alien         = pygame.transform.scale(imagem_alien, (OBST_W, OBST_H))
-imagem_terra1        = pygame.image.load("Terra1.png").convert_alpha()
-imagem_terra1        = pygame.transform.scale(imagem_terra1, (28, 28))
-imagem_lua1          = pygame.image.load("Lua1.png").convert_alpha()
-imagem_lua1          = pygame.transform.scale(imagem_lua1, (38, 38))
-imagem_mar1          = pygame.image.load("Mar1.png").convert_alpha()
-imagem_mar1          = pygame.transform.scale(imagem_mar1, (150, 250))
-imagem_marte1        = pygame.image.load("Marte1.png").convert_alpha()
-imagem_marte1        = pygame.transform.scale(imagem_marte1, (28, 28))
+imagem_carro     = pygame.image.load("Carro.png").convert_alpha()
+imagem_carro     = pygame.transform.scale(imagem_carro, (CARRO_W, CARRO_H))
+imagem_obstaculo = pygame.image.load("Obstaculo.png").convert_alpha()
+imagem_obstaculo = pygame.transform.scale(imagem_obstaculo, (OBST_W, OBST_H))
+imagem_obs_movel = pygame.image.load("Obstaculo_movel.png").convert_alpha()
+imagem_obs_movel = pygame.transform.scale(imagem_obs_movel, (OBST_W, OBST_H))
+imagem_alien     = pygame.image.load("Alien.png").convert_alpha()
+imagem_alien     = pygame.transform.scale(imagem_alien, (OBST_W, OBST_H))
+imagem_terra1    = pygame.image.load("Terra1.png").convert_alpha()
+imagem_terra1    = pygame.transform.scale(imagem_terra1, (28, 28))
+imagem_lua1      = pygame.image.load("Lua1.png").convert_alpha()
+imagem_lua1      = pygame.transform.scale(imagem_lua1, (38, 38))
+imagem_mar1      = pygame.image.load("Mar1.png").convert_alpha()
+imagem_mar1      = pygame.transform.scale(imagem_mar1, (150, 250))
+imagem_marte1    = pygame.image.load("Marte1.png").convert_alpha()
+imagem_marte1    = pygame.transform.scale(imagem_marte1, (28, 28))
+
+pygame.mixer.music.load("Musica.mp3")
+pygame.mixer.music.play(-1)
 
 fonte_grande  = pygame.font.SysFont("Arial", 18, bold=True)
 fonte_media   = pygame.font.SysFont("Arial", 13, bold=True)
 fonte_pequena = pygame.font.SysFont("Arial", 10)
 
-LARGURA_PISTA  = 100
-LARGURA_FAIXA  = LARGURA_PISTA // 3
-ESPACO_OBST    = 30
+LARGURA_PISTA = 100
+LARGURA_FAIXA = LARGURA_PISTA // 3
+ESPACO_OBST   = 30
 
-COR_ASFALTO  = (55,  55,  55)
-COR_FAIXA    = (200, 200, 200)
-COR_BORDA    = (255, 255, 255)
-COR_LARGADA  = (255,  50,  50)
+COR_ASFALTO = (55,  55,  55)
+COR_FAIXA   = (200, 200, 200)
+COR_BORDA   = (255, 255, 255)
+COR_LARGADA = (255,  50,  50)
 
+
+# =====================================================================
+# FUNCOES DE GEOMETRIA
+# Calculos matematicos usados pela pista, camera e obstaculos.
+# =====================================================================
 def calcular_normal(ax, ay, bx, by):
     dx = bx - ax
     dy = by - ay
@@ -62,10 +75,12 @@ def calcular_normal(ax, ay, bx, by):
     ny =  dx / comprimento
     return nx, ny
 
+
 def aplicar_camera(mundo_x, mundo_y, cam_x, cam_y):
     tela_x = mundo_x - cam_x
     tela_y = mundo_y - cam_y
     return tela_x, tela_y
+
 
 def escalar_vertices(lista_vertices, margem):
     lista_x = []
@@ -89,6 +104,7 @@ def escalar_vertices(lista_vertices, margem):
         resultado.append((novo_x, novo_y))
     return resultado
 
+
 def vertices_para_segmentos(lista_vertices):
     segmentos = []
     n = len(lista_vertices)
@@ -97,6 +113,7 @@ def vertices_para_segmentos(lista_vertices):
         fim    = lista_vertices[(i + 1) % n]
         segmentos.append((inicio, fim))
     return segmentos
+
 
 def rotacionar_vertices(lista_vertices, vezes):
     resultado = lista_vertices
@@ -109,8 +126,17 @@ def rotacionar_vertices(lista_vertices, vezes):
         resultado = novo
     return resultado
 
+
 SEP = 5
 
+
+# =====================================================================
+# GERACAO DO CIRCUITO
+# Cada partida sorteia um dos 6 layouts fixos (retangulo, U, L, S, Z, C),
+# escala os vertices para caber na tela, verifica se o circuito e valido
+# (sem cruzamentos ou trechos muito proximos) e posiciona o ponto de
+# largada no segmento mais longo.
+# =====================================================================
 def layout_retangulo():
     w    = random.randint(8, 12)
     h    = random.randint(5, 8)
@@ -127,15 +153,17 @@ def layout_retangulo():
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
+
 def layout_U():
     w  = random.randint(10, 14)
     h  = random.randint(8,  12)
     bw = SEP + random.randint(1, 2)
     vertices = [(0,0),(bw,0),(bw,h-SEP),(w-bw,h-SEP),(w-bw,0),(w,0),(w,h),(0,h)]
-    rotacao  = random.choice([0,1,2,3])
+    rotacao  = random.choice([0, 1, 2, 3])
     vertices = rotacionar_vertices(vertices, rotacao)
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
+
 
 def layout_L():
     w  = random.randint(8, 12)
@@ -143,10 +171,11 @@ def layout_L():
     bw = SEP + random.randint(1, 2)
     bh = SEP + random.randint(1, 2)
     vertices = [(0,0),(w,0),(w,bh),(bw,bh),(bw,h),(0,h)]
-    rotacao  = random.choice([0,1,2,3])
+    rotacao  = random.choice([0, 1, 2, 3])
     vertices = rotacionar_vertices(vertices, rotacao)
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
+
 
 def layout_S():
     w  = random.randint(6, 9)
@@ -161,15 +190,17 @@ def layout_S():
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
+
 def layout_Z():
     w  = random.randint(8, 12)
     h  = random.randint(5,  8)
     dy = SEP + random.randint(2, 4)
     vertices = [(0,0),(w,0),(w,dy),(w+SEP,dy),(w+SEP,dy+h),(0,dy+h),(0,dy),(-SEP,dy),(-SEP,0)]
-    rotacao  = random.choice([0,1,2,3])
+    rotacao  = random.choice([0, 1, 2, 3])
     vertices = rotacionar_vertices(vertices, rotacao)
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
+
 
 def layout_C():
     w  = random.randint(8, 12)
@@ -177,68 +208,89 @@ def layout_C():
     bw = SEP + random.randint(1, 2)
     bh = SEP + random.randint(1, 2)
     vertices = [(bw,0),(w,0),(w,h),(bw,h),(bw,h-bh),(0,h-bh),(0,bh),(bw,bh)]
-    rotacao  = random.choice([0,1,2,3])
+    rotacao  = random.choice([0, 1, 2, 3])
     vertices = rotacionar_vertices(vertices, rotacao)
     vertices = escalar_vertices(vertices, 80)
     return vertices_para_segmentos(vertices)
 
+
 def segmento_intersecta(p1, p2, q1, q2):
     def sentido(a, b, c):
-        return (c[1]-a[1])*(b[0]-a[0]) > (b[1]-a[1])*(c[0]-a[0])
-    cond1 = sentido(p1,q1,q2) != sentido(p2,q1,q2)
-    cond2 = sentido(p1,p2,q1) != sentido(p1,p2,q2)
+        return (c[1] - a[1]) * (b[0] - a[0]) > (b[1] - a[1]) * (c[0] - a[0])
+    cond1 = sentido(p1, q1, q2) != sentido(p2, q1, q2)
+    cond2 = sentido(p1, p2, q1) != sentido(p1, p2, q2)
     return cond1 and cond2
+
 
 def distancia_ponto_segmento(px, py, ax, ay, bx, by):
     dx = bx - ax
     dy = by - ay
     if dx == 0 and dy == 0:
-        return math.hypot(px-ax, py-ay)
-    t = ((px-ax)*dx + (py-ay)*dy) / (dx*dx + dy*dy)
-    if t < 0.0: t = 0.0
-    if t > 1.0: t = 1.0
-    return math.hypot(px-(ax+t*dx), py-(ay+t*dy))
+        return math.hypot(px - ax, py - ay)
+    t = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)
+    if t < 0.0:
+        t = 0.0
+    if t > 1.0:
+        t = 1.0
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
 
 def distancia_segmentos(s1, s2):
-    p1=s1[0]; p2=s1[1]; p3=s2[0]; p4=s2[1]
-    d1 = distancia_ponto_segmento(p1[0],p1[1],p3[0],p3[1],p4[0],p4[1])
-    d2 = distancia_ponto_segmento(p2[0],p2[1],p3[0],p3[1],p4[0],p4[1])
-    d3 = distancia_ponto_segmento(p3[0],p3[1],p1[0],p1[1],p2[0],p2[1])
-    d4 = distancia_ponto_segmento(p4[0],p4[1],p1[0],p1[1],p2[0],p2[1])
+    p1 = s1[0]
+    p2 = s1[1]
+    p3 = s2[0]
+    p4 = s2[1]
+    d1 = distancia_ponto_segmento(p1[0], p1[1], p3[0], p3[1], p4[0], p4[1])
+    d2 = distancia_ponto_segmento(p2[0], p2[1], p3[0], p3[1], p4[0], p4[1])
+    d3 = distancia_ponto_segmento(p3[0], p3[1], p1[0], p1[1], p2[0], p2[1])
+    d4 = distancia_ponto_segmento(p4[0], p4[1], p1[0], p1[1], p2[0], p2[1])
     menor = d1
-    if d2 < menor: menor = d2
-    if d3 < menor: menor = d3
-    if d4 < menor: menor = d4
+    if d2 < menor:
+        menor = d2
+    if d3 < menor:
+        menor = d3
+    if d4 < menor:
+        menor = d4
     return menor
 
+
 def circuito_valido(segmentos):
-    n = len(segmentos)
+    n      = len(segmentos)
     margem = LARGURA_PISTA * 1.1
     for i in range(n):
-        for j in range(i+2, n):
-            if i == 0 and j == n-1:
+        for j in range(i + 2, n):
+            if i == 0 and j == n - 1:
                 continue
-            p1=segmentos[i][0]; p2=segmentos[i][1]
-            q1=segmentos[j][0]; q2=segmentos[j][1]
-            if segmento_intersecta(p1,p2,q1,q2):
+            p1 = segmentos[i][0]
+            p2 = segmentos[i][1]
+            q1 = segmentos[j][0]
+            q2 = segmentos[j][1]
+            if segmento_intersecta(p1, p2, q1, q2):
                 return False
-            if distancia_segmentos(segmentos[i],segmentos[j]) < margem:
+            if distancia_segmentos(segmentos[i], segmentos[j]) < margem:
                 return False
     return True
+
 
 def gerar_circuito():
     for tentativa in range(300):
         numero = random.randint(0, 5)
-        if numero == 0: candidato = layout_retangulo()
-        elif numero == 1: candidato = layout_U()
-        elif numero == 2: candidato = layout_L()
-        elif numero == 3: candidato = layout_S()
-        elif numero == 4: candidato = layout_Z()
-        else: candidato = layout_C()
+        if numero == 0:
+            candidato = layout_retangulo()
+        elif numero == 1:
+            candidato = layout_U()
+        elif numero == 2:
+            candidato = layout_L()
+        elif numero == 3:
+            candidato = layout_S()
+        elif numero == 4:
+            candidato = layout_Z()
+        else:
+            candidato = layout_C()
         if circuito_valido(candidato):
             comprimentos = []
             for s in candidato:
-                comp = math.hypot(s[1][0]-s[0][0], s[1][1]-s[0][1])
+                comp = math.hypot(s[1][0] - s[0][0], s[1][1] - s[0][1])
                 comprimentos.append(comp)
             maior = 0
             for i in range(len(comprimentos)):
@@ -248,75 +300,93 @@ def gerar_circuito():
     candidato = layout_retangulo()
     comprimentos = []
     for s in candidato:
-        comprimentos.append(math.hypot(s[1][0]-s[0][0], s[1][1]-s[0][1]))
+        comprimentos.append(math.hypot(s[1][0] - s[0][0], s[1][1] - s[0][1]))
     maior = 0
     for i in range(len(comprimentos)):
         if comprimentos[i] > comprimentos[maior]:
             maior = i
     return candidato[maior:] + candidato[:maior]
 
+
 def segmentos_para_pontos(segmentos):
     pontos = []
     passo  = 5
     for segmento in segmentos:
-        ax=segmento[0][0]; ay=segmento[0][1]
-        bx=segmento[1][0]; by=segmento[1][1]
-        distancia = math.hypot(bx-ax, by-ay)
-        steps = int(distancia/passo)
-        if steps < 2: steps = 2
+        ax = segmento[0][0]
+        ay = segmento[0][1]
+        bx = segmento[1][0]
+        by = segmento[1][1]
+        distancia = math.hypot(bx - ax, by - ay)
+        steps = int(distancia / passo)
+        if steps < 2:
+            steps = 2
         for s in range(steps):
-            t = s/steps
-            pontos.append((ax+(bx-ax)*t, ay+(by-ay)*t))
+            t = s / steps
+            pontos.append((ax + (bx - ax) * t, ay + (by - ay) * t))
     return pontos
+
 
 def verificar_curva(pontos, indice, janela, limite_angulo):
     n = len(pontos)
-    for offset in range(-janela, janela+1):
-        i  = (indice+offset) % n
-        p1 = pontos[i]; p2 = pontos[(i+1)%n]; p3 = pontos[(i+2)%n]
-        dx1=p2[0]-p1[0]; dy1=p2[1]-p1[1]
+    for offset in range(-janela, janela + 1):
+        i  = (indice + offset) % n
+        p1 = pontos[i]
+        p2 = pontos[(i + 1) % n]
+        p3 = pontos[(i + 2) % n]
+        dx1  = p2[0] - p1[0]
+        dy1  = p2[1] - p1[1]
         ang1 = math.degrees(math.atan2(-dy1, dx1))
-        dx2=p3[0]-p2[0]; dy2=p3[1]-p2[1]
+        dx2  = p3[0] - p2[0]
+        dy2  = p3[1] - p2[1]
         ang2 = math.degrees(math.atan2(-dy2, dx2))
-        diferenca = abs((ang2-ang1+180)%360-180)
+        diferenca = abs((ang2 - ang1 + 180) % 360 - 180)
         if diferenca > limite_angulo:
             return True
     return False
 
+
 def calcular_saida(faixas_bloqueadas):
-    todas = [0,1,2]
+    todas  = [0, 1, 2]
     livres = set()
     for faixa in todas:
         if faixa not in faixas_bloqueadas:
             livres.add(faixa)
     return livres
 
+
 # =====================================================================
 # SPRITES DE AMBIENTE
+# Gera posicoes aleatorias para os sprites decorativos de cada mapa.
+# Nenhum sprite se sobrpoe a outro ou invade a area da pista
+# (exceto o Mar, que e desenhado antes da pista propositalmente).
 # =====================================================================
-
 def ponto_longe_da_pista(px, py, segmentos, margem):
-    """Retorna True se o ponto estiver suficientemente longe de todos os segmentos."""
     for seg in segmentos:
-        ax=seg[0][0]; ay=seg[0][1]; bx=seg[1][0]; by=seg[1][1]
-        d = distancia_ponto_segmento(px, py, ax, ay, bx, by)
+        ax = seg[0][0]
+        ay = seg[0][1]
+        bx = seg[1][0]
+        by = seg[1][1]
+        d  = distancia_ponto_segmento(px, py, ax, ay, bx, by)
         if d < margem:
             return False
     return True
 
+
 def sprites_se_sobrepoem(x1, y1, w1, h1, x2, y2, w2, h2):
-    """Retorna True se dois retangulos se sobrepõem."""
-    if x1 + w1 < x2: return False
-    if x2 + w2 < x1: return False
-    if y1 + h1 < y2: return False
-    if y2 + h2 < y1: return False
+    if x1 + w1 < x2:
+        return False
+    if x2 + w2 < x1:
+        return False
+    if y1 + h1 < y2:
+        return False
+    if y2 + h2 < y1:
+        return False
     return True
 
-def gerar_posicoes_sprites(segmentos, quantidade_min, quantidade_max, larg, alt, margem_pista):
-    """Gera posicoes aleatorias que nao invadem a pista nem se sobrepõem entre si."""
-    quantidade = random.randint(quantidade_min, quantidade_max)
-    posicoes   = []
 
+def gerar_posicoes_sprites(segmentos, quantidade_min, quantidade_max, larg, alt, margem_pista):
+    quantidade   = random.randint(quantidade_min, quantidade_max)
+    posicoes     = []
     margem_mundo = 400
     x_min = -margem_mundo
     y_min = -margem_mundo
@@ -333,20 +403,20 @@ def gerar_posicoes_sprites(segmentos, quantidade_min, quantidade_max, larg, alt,
         if not ponto_longe_da_pista(cx, cy, segmentos, margem_pista + max(larg, alt) / 2):
             continue
         sobrepos = False
-        for (ox, oy) in posicoes:
+        for i in range(len(posicoes)):
+            ox = posicoes[i][0]
+            oy = posicoes[i][1]
             if sprites_se_sobrepoem(px, py, larg, alt, ox, oy, larg, alt):
                 sobrepos = True
                 break
-        if not sobrepos:
+        if sobrepos == False:
             posicoes.append((px, py))
-
     return posicoes
 
-def gerar_posicoes_mar(quantidade_min, quantidade_max, larg, alt):
-    """Gera posicoes para o Mar1 — pode invadir a pista, sem se sobrepor entre si."""
-    quantidade = random.randint(quantidade_min, quantidade_max)
-    posicoes   = []
 
+def gerar_posicoes_mar(quantidade_min, quantidade_max, larg, alt):
+    quantidade   = random.randint(quantidade_min, quantidade_max)
+    posicoes     = []
     margem_mundo = 400
     x_min = -margem_mundo
     y_min = -margem_mundo
@@ -359,17 +429,18 @@ def gerar_posicoes_mar(quantidade_min, quantidade_max, larg, alt):
         px = random.uniform(x_min, x_max)
         py = random.uniform(y_min, y_max)
         sobrepos = False
-        for (ox, oy) in posicoes:
+        for i in range(len(posicoes)):
+            ox = posicoes[i][0]
+            oy = posicoes[i][1]
             if sprites_se_sobrepoem(px, py, larg, alt, ox, oy, larg, alt):
                 sobrepos = True
                 break
-        if not sobrepos:
+        if sobrepos == False:
             posicoes.append((px, py))
-
     return posicoes
 
+
 def gerar_sprites_ambiente(segmentos, ambiente):
-    """Gera e retorna as posicoes dos sprites para o ambiente atual."""
     if ambiente == "Terra":
         return gerar_posicoes_sprites(segmentos, 30, 30, 28, 28, LARGURA_PISTA / 2 + 20)
     elif ambiente == "Lua":
@@ -380,29 +451,37 @@ def gerar_sprites_ambiente(segmentos, ambiente):
         return gerar_posicoes_sprites(segmentos, 20, 20, 28, 28, LARGURA_PISTA / 2 + 20)
     return []
 
+
 def desenhar_sprites_fundo(superficie, posicoes, imagem, cam_x, cam_y):
-    for posicao in posicoes:
-        px = posicao[0]
-        py = posicao[1]
+    for i in range(len(posicoes)):
+        px = posicoes[i][0]
+        py = posicoes[i][1]
         sx = px - cam_x
         sy = py - cam_y
         superficie.blit(imagem, (int(sx), int(sy)))
+
 
 def desenhar_sprites_frente(superficie, posicoes, imagem, cam_x, cam_y):
-    for posicao in posicoes:
-        px = posicao[0]
-        py = posicao[1]
+    for i in range(len(posicoes)):
+        px = posicoes[i][0]
+        py = posicoes[i][1]
         sx = px - cam_x
         sy = py - cam_y
         superficie.blit(imagem, (int(sx), int(sy)))
 
-# =====================================================================
-# OBSTÁCULOS
-# =====================================================================
 
+# =====================================================================
+# OBSTACULOS
+# Tres tipos: fixo (laranja), movel (caracol que troca de faixa sozinho)
+# e alien (imita os movimentos do jogador com delay de 0.4 segundos).
+# Distribuidos apenas em trechos retos, com regras que impedem corredores
+# livres e garantem que o jogador sempre tenha ao menos uma saida.
+# A cada volta, os obstaculos sao regenerados com maior dificuldade.
+# =====================================================================
 def gerar_obstaculos(pontos, voltas):
     duplos  = [[0, 1], [1, 2], [0, 2]]
     simples = [[0], [1], [2]]
+
     obstaculos       = []
     n                = len(pontos)
     indice           = ESPACO_OBST * 2
@@ -445,10 +524,10 @@ def gerar_obstaculos(pontos, voltas):
                 obstaculos.append(obstaculo)
 
             elif numero_sorteado < chance_alien + chance_movel:
-                faixas         = random.choice(simples)
-                faixa_inicial  = faixas[0]
-                offset_inicial = (faixa_inicial - 1) * LARGURA_FAIXA
-                saida_atual    = calcular_saida(faixas)
+                faixas           = random.choice(simples)
+                faixa_inicial    = faixas[0]
+                offset_inicial   = (faixa_inicial - 1) * LARGURA_FAIXA
+                saida_atual      = calcular_saida(faixas)
                 historico_saidas.append(saida_atual)
                 if len(historico_saidas) > 2:
                     historico_saidas.pop(0)
@@ -510,6 +589,7 @@ def gerar_obstaculos(pontos, voltas):
         indice = indice + ESPACO_OBST + random.randint(0, 20)
     return obstaculos
 
+
 def atualizar_obstaculos(obstaculos, dt, faixa_carro):
     for obs in obstaculos:
         if obs["alien"]:
@@ -540,6 +620,7 @@ def atualizar_obstaculos(obstaculos, dt, faixa_carro):
                 obs["off_alvo"]   = (nova_faixa - 1) * LARGURA_FAIXA
                 obs["faixas"]     = [nova_faixa]
 
+
 def notificar_aliens(obstaculos, nova_faixa_carro):
     for obs in obstaculos:
         if obs["alien"] == False:
@@ -549,6 +630,7 @@ def notificar_aliens(obstaculos, nova_faixa_carro):
             "timer": 0.0,
         }
         obs["fila_movimentos"].append(movimento)
+
 
 def desenhar_obstaculos(superficie, pontos, obstaculos, cam_x, cam_y):
     n = len(pontos)
@@ -593,82 +675,108 @@ def desenhar_obstaculos(superficie, pontos, obstaculos, cam_x, cam_y):
                 rect.centerx = int(sx)
                 rect.centery  = int(sy)
                 superficie.blit(rotacionado, rect)
-        if obs["alien"] or obs["movel"]:
-            off = obs["off_real"]
-            mx=p1[0]+nx*off; my=p1[1]+ny*off
-            sx,sy = aplicar_camera(mx, my, cam_x, cam_y)
-            rot = pygame.transform.rotate(sprite, angulo)
-            rect = rot.get_rect()
-            rect.centerx = int(sx); rect.centery = int(sy)
-            superficie.blit(rot, rect)
-        else:
-            for faixa in obs["faixas"]:
-                off=(faixa-1)*LARGURA_FAIXA
-                mx=p1[0]+nx*off; my=p1[1]+ny*off
-                sx,sy = aplicar_camera(mx, my, cam_x, cam_y)
-                rot = pygame.transform.rotate(sprite, angulo)
-                rect = rot.get_rect()
-                rect.centerx = int(sx); rect.centery = int(sy)
-                superficie.blit(rot, rect)
+
 
 def verificar_colisao(carro_x, carro_y, carro_indice, pontos, obstaculos):
     n = len(pontos)
     for obs in obstaculos:
-        indice = obs["indice"]
+        indice    = obs["indice"]
         distancia = (indice - carro_indice) % n
-        if distancia > 30 or distancia == 0: continue
-        p1=pontos[indice]; p2=pontos[(indice+1)%n]
-        dx=p2[0]-p1[0]; dy=p2[1]-p1[1]
-        c=math.hypot(dx,dy)
-        if c == 0: continue
-        nx=-dy/c; ny=dx/c; fx=dx/c; fy=dy/c
+        if distancia > 30 or distancia == 0:
+            continue
+        p1 = pontos[indice]
+        p2 = pontos[(indice + 1) % n]
+        dx = p2[0] - p1[0]
+        dy = p2[1] - p1[1]
+        c  = math.hypot(dx, dy)
+        if c == 0:
+            continue
+        nx = -dy / c
+        ny =  dx / c
+        fx =  dx / c
+        fy =  dy / c
         if obs["alien"] or obs["movel"]:
-            off=obs["off_real"]
-            ox=p1[0]+nx*off; oy=p1[1]+ny*off
-            ddx=carro_x-ox; ddy=carro_y-oy
-            if abs(ddx*nx+ddy*ny) < LARGURA_FAIXA/2-2 and abs(ddx*fx+ddy*fy) < 20:
+            off = obs["off_real"]
+            ox  = p1[0] + nx * off
+            oy  = p1[1] + ny * off
+            ddx = carro_x - ox
+            ddy = carro_y - oy
+            dist_lateral      = abs(ddx * nx + ddy * ny)
+            dist_longitudinal = abs(ddx * fx + ddy * fy)
+            if dist_lateral < LARGURA_FAIXA / 2 - 2 and dist_longitudinal < 20:
                 return True
         else:
             for faixa in obs["faixas"]:
-                off=(faixa-1)*LARGURA_FAIXA
-                ox=p1[0]+nx*off; oy=p1[1]+ny*off
-                ddx=carro_x-ox; ddy=carro_y-oy
-                if abs(ddx*nx+ddy*ny) < LARGURA_FAIXA/2-2 and abs(ddx*fx+ddy*fy) < 20:
+                off = (faixa - 1) * LARGURA_FAIXA
+                ox  = p1[0] + nx * off
+                oy  = p1[1] + ny * off
+                ddx = carro_x - ox
+                ddy = carro_y - oy
+                dist_lateral      = abs(ddx * nx + ddy * ny)
+                dist_longitudinal = abs(ddx * fx + ddy * fy)
+                if dist_lateral < LARGURA_FAIXA / 2 - 2 and dist_longitudinal < 20:
                     return True
     return False
 
+
+# =====================================================================
+# DESENHO DA PISTA
+# Desenha o asfalto, os quadrados de juncao nas esquinas, as bordas
+# brancas recuadas (para nao vazar nas curvas), as faixas tracejadas
+# e a linha vermelha de largada/chegada.
+# =====================================================================
 def desenhar_pista(superficie, segmentos, cam_x, cam_y):
     hw = LARGURA_PISTA / 2
-    for segmento in segmentos:
-        ax=segmento[0][0]; ay=segmento[0][1]; bx=segmento[1][0]; by=segmento[1][1]
-        nx,ny = calcular_normal(ax,ay,bx,by)
-        c1=aplicar_camera(ax+nx*hw,ay+ny*hw,cam_x,cam_y)
-        c2=aplicar_camera(bx+nx*hw,by+ny*hw,cam_x,cam_y)
-        c3=aplicar_camera(bx-nx*hw,by-ny*hw,cam_x,cam_y)
-        c4=aplicar_camera(ax-nx*hw,ay-ny*hw,cam_x,cam_y)
-        pygame.draw.polygon(superficie, COR_ASFALTO, [c1,c2,c3,c4])
-    for segmento in segmentos:
-        vx=segmento[1][0]; vy=segmento[1][1]
-        sx,sy = aplicar_camera(vx,vy,cam_x,cam_y)
-        pygame.draw.rect(superficie, COR_ASFALTO, (int(sx-hw),int(sy-hw),int(LARGURA_PISTA),int(LARGURA_PISTA)))
-    recuo = hw
-    for segmento in segmentos:
-        ax=segmento[0][0]; ay=segmento[0][1]; bx=segmento[1][0]; by=segmento[1][1]
-        nx,ny = calcular_normal(ax,ay,bx,by)
-        distancia = math.hypot(bx-ax,by-ay)
-        if distancia == 0: continue
-        fx=(bx-ax)/distancia; fy=(by-ay)/distancia
-        ax2=ax+fx*recuo; ay2=ay+fy*recuo; bx2=bx-fx*recuo; by2=by-fy*recuo
-        for sinal in [1,-1]:
-            p1=aplicar_camera(ax2+nx*hw*sinal,ay2+ny*hw*sinal,cam_x,cam_y)
-            p2=aplicar_camera(bx2+nx*hw*sinal,by2+ny*hw*sinal,cam_x,cam_y)
-            pygame.draw.line(superficie,COR_BORDA,(int(p1[0]),int(p1[1])),(int(p2[0]),int(p2[1])),4)
+
     for segmento in segmentos:
         ax = segmento[0][0]
         ay = segmento[0][1]
         bx = segmento[1][0]
         by = segmento[1][1]
         nx, ny = calcular_normal(ax, ay, bx, by)
+        canto1 = aplicar_camera(ax + nx * hw, ay + ny * hw, cam_x, cam_y)
+        canto2 = aplicar_camera(bx + nx * hw, by + ny * hw, cam_x, cam_y)
+        canto3 = aplicar_camera(bx - nx * hw, by - ny * hw, cam_x, cam_y)
+        canto4 = aplicar_camera(ax - nx * hw, ay - ny * hw, cam_x, cam_y)
+        pygame.draw.polygon(superficie, COR_ASFALTO, [canto1, canto2, canto3, canto4])
+
+    for segmento in segmentos:
+        vx = segmento[1][0]
+        vy = segmento[1][1]
+        sx, sy = aplicar_camera(vx, vy, cam_x, cam_y)
+        pygame.draw.rect(superficie, COR_ASFALTO,
+                         (int(sx - hw), int(sy - hw),
+                          int(LARGURA_PISTA), int(LARGURA_PISTA)))
+
+    recuo = hw
+    for segmento in segmentos:
+        ax = segmento[0][0]
+        ay = segmento[0][1]
+        bx = segmento[1][0]
+        by = segmento[1][1]
+        nx, ny    = calcular_normal(ax, ay, bx, by)
+        distancia = math.hypot(bx - ax, by - ay)
+        if distancia == 0:
+            continue
+        fx  = (bx - ax) / distancia
+        fy  = (by - ay) / distancia
+        ax2 = ax + fx * recuo
+        ay2 = ay + fy * recuo
+        bx2 = bx - fx * recuo
+        by2 = by - fy * recuo
+        for sinal in [1, -1]:
+            p1 = aplicar_camera(ax2 + nx * hw * sinal, ay2 + ny * hw * sinal, cam_x, cam_y)
+            p2 = aplicar_camera(bx2 + nx * hw * sinal, by2 + ny * hw * sinal, cam_x, cam_y)
+            pygame.draw.line(superficie, COR_BORDA,
+                             (int(p1[0]), int(p1[1])),
+                             (int(p2[0]), int(p2[1])), 4)
+
+    for segmento in segmentos:
+        ax = segmento[0][0]
+        ay = segmento[0][1]
+        bx = segmento[1][0]
+        by = segmento[1][1]
+        nx, ny    = calcular_normal(ax, ay, bx, by)
         distancia = math.hypot(bx - ax, by - ay)
         if distancia == 0:
             continue
@@ -693,6 +801,7 @@ def desenhar_pista(superficie, segmentos, cam_x, cam_y):
                 pygame.draw.line(superficie, COR_FAIXA,
                                  (int(sx1), int(sy1)),
                                  (int(sx2), int(sy2)), 2)
+
     ax = segmentos[0][0][0]
     ay = segmentos[0][0][1]
     bx = segmentos[0][1][0]
@@ -706,6 +815,14 @@ def desenhar_pista(superficie, segmentos, cam_x, cam_y):
                      (int(p1[0]), int(p1[1])),
                      (int(p2[0]), int(p2[1])), 6)
 
+
+# =====================================================================
+# CLASSE CARRO
+# Controla o movimento do carro ao longo da pista usando uma lista
+# densa de pontos. O offset lateral (faixas) e aplicado usando normais
+# suavizadas, garantindo curvas fluidas. A velocidade aumenta a cada
+# volta e a pontuacao e contada em metros percorridos.
+# =====================================================================
 class Carro(pygame.sprite.Sprite):
     def __init__(self, segmentos):
         pygame.sprite.Sprite.__init__(self)
@@ -731,17 +848,17 @@ class Carro(pygame.sprite.Sprite):
                 melhor   = i
         self.pontos = self.pontos[melhor:] + self.pontos[:melhor]
 
-        self.indice       = 0
-        self.progresso    = 0.0
-        self.vel_base     = 28.0
-        self.velocidade   = self.vel_base
-        self.faixa        = 1
-        self.faixa_real   = 1.0
-        self.angulo       = 0.0
-        self.pontuacao    = 0
-        self.metros_acum  = 0.0
-        self.voltas       = 0
-        self.vel_kmh_real = 0
+        self.indice        = 0
+        self.progresso     = 0.0
+        self.vel_base      = 28.0
+        self.velocidade    = self.vel_base
+        self.faixa         = 1
+        self.faixa_real    = 1.0
+        self.angulo        = 0.0
+        self.pontuacao     = 0
+        self.metros_acum   = 0.0
+        self.voltas        = 0
+        self.vel_kmh_real  = 0
         self.metros_ultimo = 0.0
 
         n = self.total_pontos
@@ -763,8 +880,8 @@ class Carro(pygame.sprite.Sprite):
             nx_sum = 0.0
             ny_sum = 0.0
             for j in range(-janela, janela + 1):
-                nx = normais_brutas[(i + j) % n][0]
-                ny = normais_brutas[(i + j) % n][1]
+                nx     = normais_brutas[(i + j) % n][0]
+                ny     = normais_brutas[(i + j) % n][1]
                 nx_sum = nx_sum + nx
                 ny_sum = ny_sum + ny
             c = math.hypot(nx_sum, ny_sum)
@@ -843,6 +960,13 @@ class Carro(pygame.sprite.Sprite):
         rect.centery  = int(sy)
         superficie.blit(rotacionado, rect)
 
+
+# =====================================================================
+# HUD E TELAS DE RESULTADO
+# O HUD exibe velocidade real (calculada pelos metros percorridos),
+# numero da volta e pontuacao em metros. A tela de game over mostra
+# o resultado final com opcoes de reiniciar ou voltar ao menu.
+# =====================================================================
 def desenhar_hud(superficie, carro):
     painel = pygame.Surface((140, 62), pygame.SRCALPHA)
     painel.fill((0, 0, 0, 160))
@@ -854,7 +978,7 @@ def desenhar_hud(superficie, carro):
         texto_vel = fonte_grande.render("  " + str(carro.vel_kmh_real) + " km/h", True, (255, 220, 0))
 
     texto_volta = fonte_media.render("  Volta: " + str(carro.voltas + 1), True, (255, 255, 255))
-    texto_pts   = fonte_media.render("  " + str(carro.pontuacao) + " m", True, (255, 255, 255))
+    texto_pts   = fonte_media.render("  " + str(carro.pontuacao) + " m",  True, (255, 255, 255))
 
     superficie.blit(texto_vel,   (6,  8))
     superficie.blit(texto_volta, (6, 32))
@@ -871,6 +995,7 @@ def desenhar_hud(superficie, carro):
 
     instrucoes = fonte_pequena.render("A = esq   D = dir   R = novo circuito", True, (180, 180, 180))
     superficie.blit(instrucoes, (VIRT_W // 2 - instrucoes.get_width() // 2, VIRT_H - 30))
+
 
 def desenhar_game_over(superficie, pontuacao, voltas):
     overlay = pygame.Surface((VIRT_W, VIRT_H), pygame.SRCALPHA)
@@ -891,6 +1016,13 @@ def desenhar_game_over(superficie, pontuacao, voltas):
     superficie.blit(t3, (VIRT_W // 2 - t3.get_width() // 2, VIRT_H // 2 + 10))
     superficie.blit(t4, (VIRT_W // 2 - t4.get_width() // 2, VIRT_H // 2 + 50))
 
+
+# =====================================================================
+# VARIAVEIS GLOBAIS E FUNCOES DO MENU
+# Guardam o estado do jogo entre telas (recorde, ambiente, velocidade,
+# modo desafio). As funcoes de menu e configuracoes desenham os botoes
+# interativos e retornam seus retangulos para deteccao de clique.
+# =====================================================================
 maior_recorde      = 0
 tela_atual         = "menu"
 vel_inicial_kmh    = 10
@@ -898,184 +1030,297 @@ ambiente_escolhido = "Aleatorio"
 ambiente_atual     = "Terra"
 posicoes_sprites   = []
 
-OPCOES_VELOCIDADE = [10,14,18,22]
-OPCOES_AMBIENTE   = ["Aleatorio","Terra","Mar","Lua","Marte"]
-modo_alien        = False
+OPCOES_VELOCIDADE = [10, 14, 18, 22]
+OPCOES_AMBIENTE   = ["Aleatorio", "Terra", "Mar", "Lua", "Marte"]
+modo_alien   = False
+musica_ativa = True
 
 CORES_AMBIENTE = {
-    "Terra": (25, 150, 48),
-    "Mar":   (20,  60, 140),
-    "Lua":   (130,130, 130),
-    "Marte": (201, 73,  50),
+    "Terra": (25,  150,  48),
+    "Mar":   (20,   60, 140),
+    "Lua":   (130, 130, 130),
+    "Marte": (201,  73,  50),
 }
+
 
 def kmh_para_vel_base(kmh):
     return kmh * 2.8
 
+
 def sortear_ambiente():
-    opcoes=["Terra","Mar","Lua","Marte"]
+    opcoes = ["Terra", "Mar", "Lua", "Marte"]
     return random.choice(opcoes)
 
-segmentos  = None
-carro      = None
-obstaculos = None
-game_over  = False
-voltas_ant = 0
-cam_x=0; cam_y=0
+
+segmentos        = None
+carro            = None
+obstaculos       = None
+game_over        = False
+voltas_ant       = 0
+cam_x            = 0
+cam_y            = 0
+
 
 def iniciar_partida():
-    global segmentos,carro,obstaculos,game_over,voltas_ant,cam_x,cam_y,ambiente_atual,posicoes_sprites
-    segmentos  = gerar_circuito()
-    carro      = Carro(segmentos)
-    carro.vel_base=kmh_para_vel_base(vel_inicial_kmh)
-    carro.velocidade=carro.vel_base
-    obstaculos = gerar_obstaculos(carro.pontos, voltas=0)
-    game_over  = False
-    voltas_ant = 0
-    cam_x=carro.x-VIRT_W//2; cam_y=carro.y-VIRT_H//2
+    global segmentos, carro, obstaculos, game_over, voltas_ant, cam_x, cam_y, ambiente_atual, posicoes_sprites
+    segmentos        = gerar_circuito()
+    carro            = Carro(segmentos)
+    carro.vel_base   = kmh_para_vel_base(vel_inicial_kmh)
+    carro.velocidade = carro.vel_base
+    obstaculos       = gerar_obstaculos(carro.pontos, voltas=0)
+    game_over        = False
+    voltas_ant       = 0
+    cam_x            = carro.x - VIRT_W // 2
+    cam_y            = carro.y - VIRT_H // 2
     if ambiente_escolhido == "Aleatorio":
         ambiente_atual = sortear_ambiente()
     else:
         ambiente_atual = ambiente_escolhido
     posicoes_sprites = gerar_sprites_ambiente(segmentos, ambiente_atual)
 
+
 def desenhar_botao(superficie, texto, cx, cy, largura, altura, fonte):
-    mouse_x,mouse_y=pygame.mouse.get_pos()
-    rect=pygame.Rect(cx-largura//2,cy-altura//2,largura,altura)
-    if rect.collidepoint(mouse_x,mouse_y): cor_fundo=(80,80,160)
-    else: cor_fundo=(40,40,100)
-    pygame.draw.rect(superficie,cor_fundo,rect,border_radius=10)
-    pygame.draw.rect(superficie,(150,150,255),rect,2,border_radius=10)
-    label=fonte.render(texto,True,(255,255,255))
-    superficie.blit(label,(cx-label.get_width()//2,cy-label.get_height()//2))
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    rect = pygame.Rect(cx - largura // 2, cy - altura // 2, largura, altura)
+    if rect.collidepoint(mouse_x, mouse_y):
+        cor_fundo = (80, 80, 160)
+    else:
+        cor_fundo = (40, 40, 100)
+    pygame.draw.rect(superficie, cor_fundo, rect, border_radius=10)
+    pygame.draw.rect(superficie, (150, 150, 255), rect, 2, border_radius=10)
+    label = fonte.render(texto, True, (255, 255, 255))
+    superficie.blit(label, (cx - label.get_width() // 2, cy - label.get_height() // 2))
     return rect
 
+
 def desenhar_menu(superficie):
-    superficie.fill((20,20,40))
-    fonte_titulo=pygame.font.SysFont("Impact",72)
-    fonte_botao=pygame.font.SysFont("Arial",26,bold=True)
-    fonte_recorde=pygame.font.SysFont("Arial",18)
-    titulo=fonte_titulo.render("LoopDriver",True,(200,100,255))
-    superficie.blit(titulo,(WIDTH//2-titulo.get_width()//2,90))
-    recorde_texto=fonte_recorde.render("High Score: "+str(maior_recorde)+" m",True,(180,180,180))
-    superficie.blit(recorde_texto,(WIDTH//2-recorde_texto.get_width()//2,210))
-    rect_iniciar=desenhar_botao(superficie,"Iniciar Partida",WIDTH//2,340,280,55,fonte_botao)
-    rect_config=desenhar_botao(superficie,"Configurações",WIDTH//2,420,280,55,fonte_botao)
-    rect_fechar=desenhar_botao(superficie,"Fechar Jogo",WIDTH//2,500,280,55,fonte_botao)
-    return rect_iniciar,rect_config,rect_fechar
+    superficie.fill((20, 20, 40))
+
+    fonte_titulo  = pygame.font.SysFont("Impact", 72)
+    fonte_botao   = pygame.font.SysFont("Arial", 26, bold=True)
+    fonte_recorde = pygame.font.SysFont("Arial", 18)
+
+    titulo = fonte_titulo.render("LoopDriver", True, (200, 100, 255))
+    superficie.blit(titulo, (WIDTH // 2 - titulo.get_width() // 2, 90))
+
+    recorde_texto = fonte_recorde.render("High Score: " + str(maior_recorde) + " m", True, (180, 180, 180))
+    superficie.blit(recorde_texto, (WIDTH // 2 - recorde_texto.get_width() // 2, 210))
+
+    rect_iniciar = desenhar_botao(superficie, "Iniciar Partida", WIDTH // 2, 340, 280, 55, fonte_botao)
+    rect_config  = desenhar_botao(superficie, "Configurações",   WIDTH // 2, 420, 280, 55, fonte_botao)
+    rect_fechar  = desenhar_botao(superficie, "Fechar Jogo",     WIDTH // 2, 500, 280, 55, fonte_botao)
+
+    return rect_iniciar, rect_config, rect_fechar
+
 
 def desenhar_configuracoes(superficie):
-    global vel_inicial_kmh,ambiente_escolhido,modo_alien
-    superficie.fill((20,20,40))
-    fonte_titulo=pygame.font.SysFont("Arial",36,bold=True)
-    fonte_label=pygame.font.SysFont("Arial",22,bold=True)
-    fonte_opcao=pygame.font.SysFont("Arial",18)
-    fonte_voltar=pygame.font.SysFont("Arial",22,bold=True)
-    titulo=fonte_titulo.render("Configurações",True,(255,220,0))
-    superficie.blit(titulo,(WIDTH//2-titulo.get_width()//2,50))
-    label_vel=fonte_label.render("Velocidade inicial:",True,(255,255,255))
-    superficie.blit(label_vel,(WIDTH//2-label_vel.get_width()//2,120))
-    mouse_x,mouse_y=pygame.mouse.get_pos()
-    retangulos_vel=[]
-    total=len(OPCOES_VELOCIDADE); espaco=100
-    inicio_x=WIDTH//2-(total*espaco)//2+espaco//2
+    global vel_inicial_kmh, ambiente_escolhido, modo_alien, musica_ativa
+
+    superficie.fill((20, 20, 40))
+
+    fonte_titulo = pygame.font.SysFont("Arial", 36, bold=True)
+    fonte_label  = pygame.font.SysFont("Arial", 22, bold=True)
+    fonte_opcao  = pygame.font.SysFont("Arial", 18)
+    fonte_voltar = pygame.font.SysFont("Arial", 22, bold=True)
+
+    titulo = fonte_titulo.render("Configurações", True, (255, 220, 0))
+    superficie.blit(titulo, (WIDTH // 2 - titulo.get_width() // 2, 50))
+
+    label_vel = fonte_label.render("Velocidade inicial:", True, (255, 255, 255))
+    superficie.blit(label_vel, (WIDTH // 2 - label_vel.get_width() // 2, 120))
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    retangulos_vel   = []
+    total    = len(OPCOES_VELOCIDADE)
+    espaco   = 100
+    inicio_x = WIDTH // 2 - (total * espaco) // 2 + espaco // 2
+
     for i in range(total):
-        kmh=OPCOES_VELOCIDADE[i]; cx=inicio_x+i*espaco; cy=190
-        rect=pygame.Rect(cx-38,cy-25,76,50)
-        if kmh==vel_inicial_kmh: cor_fundo=(100,180,100); cor_borda=(200,255,200)
-        elif rect.collidepoint(mouse_x,mouse_y): cor_fundo=(80,80,160); cor_borda=(150,150,255)
-        else: cor_fundo=(40,40,100); cor_borda=(100,100,200)
-        pygame.draw.rect(superficie,cor_fundo,rect,border_radius=8)
-        pygame.draw.rect(superficie,cor_borda,rect,2,border_radius=8)
-        texto=fonte_opcao.render(str(kmh)+" km/h",True,(255,255,255))
-        superficie.blit(texto,(cx-texto.get_width()//2,cy-texto.get_height()//2))
-        retangulos_vel.append((rect,kmh))
-    label_amb=fonte_label.render("Ambiente:",True,(255,255,255))
-    superficie.blit(label_amb,(WIDTH//2-label_amb.get_width()//2,270))
-    retangulos_amb=[]
-    total_amb=len(OPCOES_AMBIENTE); espaco_amb=160
-    inicio_amb=WIDTH//2-(total_amb*espaco_amb)//2+espaco_amb//2
+        kmh  = OPCOES_VELOCIDADE[i]
+        cx   = inicio_x + i * espaco
+        cy   = 190
+        rect = pygame.Rect(cx - 38, cy - 25, 76, 50)
+        if kmh == vel_inicial_kmh:
+            cor_fundo = (100, 180, 100)
+            cor_borda = (200, 255, 200)
+        elif rect.collidepoint(mouse_x, mouse_y):
+            cor_fundo = (80, 80, 160)
+            cor_borda = (150, 150, 255)
+        else:
+            cor_fundo = (40, 40, 100)
+            cor_borda = (100, 100, 200)
+        pygame.draw.rect(superficie, cor_fundo, rect, border_radius=8)
+        pygame.draw.rect(superficie, cor_borda, rect, 2, border_radius=8)
+        texto = fonte_opcao.render(str(kmh) + " km/h", True, (255, 255, 255))
+        superficie.blit(texto, (cx - texto.get_width() // 2, cy - texto.get_height() // 2))
+        retangulos_vel.append((rect, kmh))
+
+    label_amb = fonte_label.render("Ambiente:", True, (255, 255, 255))
+    superficie.blit(label_amb, (WIDTH // 2 - label_amb.get_width() // 2, 270))
+
+    retangulos_amb = []
+    total_amb  = len(OPCOES_AMBIENTE)
+    espaco_amb = 160
+    inicio_amb = WIDTH // 2 - (total_amb * espaco_amb) // 2 + espaco_amb // 2
+
     for i in range(total_amb):
-        nome=OPCOES_AMBIENTE[i]; cx=inicio_amb+i*espaco_amb; cy=340
-        rect=pygame.Rect(cx-68,cy-25,136,50)
-        if nome==ambiente_escolhido: cor_fundo=(100,180,100); cor_borda=(200,255,200)
-        elif rect.collidepoint(mouse_x,mouse_y): cor_fundo=(80,80,160); cor_borda=(150,150,255)
+        nome = OPCOES_AMBIENTE[i]
+        cx   = inicio_amb + i * espaco_amb
+        cy   = 340
+        rect = pygame.Rect(cx - 68, cy - 25, 136, 50)
+        if nome == ambiente_escolhido:
+            cor_fundo = (100, 180, 100)
+            cor_borda = (200, 255, 200)
+        elif rect.collidepoint(mouse_x, mouse_y):
+            cor_fundo = (80, 80, 160)
+            cor_borda = (150, 150, 255)
         else:
             if nome in CORES_AMBIENTE:
-                r,g,b=CORES_AMBIENTE[nome]; cor_fundo=(r//2,g//2,b//2)
-            else: cor_fundo=(40,40,100)
-            cor_borda=(100,100,200)
-        pygame.draw.rect(superficie,cor_fundo,rect,border_radius=8)
-        pygame.draw.rect(superficie,cor_borda,rect,2,border_radius=8)
-        texto=fonte_opcao.render(nome,True,(255,255,255))
-        superficie.blit(texto,(cx-texto.get_width()//2,cy-texto.get_height()//2))
-        retangulos_amb.append((rect,nome))
-    rect_voltar=desenhar_botao(superficie,"Voltar ao Menu",WIDTH//2,460,280,55,fonte_voltar)
-    fonte_desafio=pygame.font.SysFont("Arial",18,bold=True)
-    bx_alien=WIDTH-80; by_alien=HEIGHT-40
-    rect_alien=pygame.Rect(bx_alien-60,by_alien-22,120,44)
-    if modo_alien: cor_alien=(180,0,220); cor_borda_alien=(255,100,255)
-    elif rect_alien.collidepoint(mouse_x,mouse_y): cor_alien=(80,80,160); cor_borda_alien=(150,150,255)
-    else: cor_alien=(40,40,100); cor_borda_alien=(150,150,255)
-    pygame.draw.rect(superficie,cor_alien,rect_alien,border_radius=10)
-    pygame.draw.rect(superficie,cor_borda_alien,rect_alien,2,border_radius=10)
-    txt_desafio=fonte_desafio.render("Desafio",True,(255,255,255))
-    superficie.blit(txt_desafio,(bx_alien-txt_desafio.get_width()//2,by_alien-txt_desafio.get_height()//2))
-    return retangulos_vel,retangulos_amb,rect_voltar,rect_alien
+                r = CORES_AMBIENTE[nome][0]
+                g = CORES_AMBIENTE[nome][1]
+                b = CORES_AMBIENTE[nome][2]
+                cor_fundo = (r // 2, g // 2, b // 2)
+            else:
+                cor_fundo = (40, 40, 100)
+            cor_borda = (100, 100, 200)
+        pygame.draw.rect(superficie, cor_fundo, rect, border_radius=8)
+        pygame.draw.rect(superficie, cor_borda, rect, 2, border_radius=8)
+        texto = fonte_opcao.render(nome, True, (255, 255, 255))
+        superficie.blit(texto, (cx - texto.get_width() // 2, cy - texto.get_height() // 2))
+        retangulos_amb.append((rect, nome))
 
+    rect_voltar = desenhar_botao(superficie, "Voltar ao Menu", WIDTH // 2, 460, 280, 55, fonte_voltar)
+
+    fonte_desafio  = pygame.font.SysFont("Arial", 18, bold=True)
+    bx_alien       = WIDTH - 80
+    by_alien       = HEIGHT - 40
+    rect_alien     = pygame.Rect(bx_alien - 60, by_alien - 22, 120, 44)
+    if modo_alien:
+        cor_alien       = (180, 0, 220)
+        cor_borda_alien = (255, 100, 255)
+    elif rect_alien.collidepoint(mouse_x, mouse_y):
+        cor_alien       = (80, 80, 160)
+        cor_borda_alien = (150, 150, 255)
+    else:
+        cor_alien       = (40, 40, 100)
+        cor_borda_alien = (150, 150, 255)
+    pygame.draw.rect(superficie, cor_alien, rect_alien, border_radius=10)
+    pygame.draw.rect(superficie, cor_borda_alien, rect_alien, 2, border_radius=10)
+    txt_desafio = fonte_desafio.render("Desafio", True, (255, 255, 255))
+    superficie.blit(txt_desafio, (bx_alien - txt_desafio.get_width() // 2, by_alien - txt_desafio.get_height() // 2))
+
+    fonte_musica  = pygame.font.SysFont("Arial", 18, bold=True)
+    bx_musica     = 80
+    by_musica     = HEIGHT - 40
+    rect_musica   = pygame.Rect(bx_musica - 60, by_musica - 22, 120, 44)
+    if musica_ativa:
+        cor_musica       = (100, 180, 100)
+        cor_borda_musica = (200, 255, 200)
+        texto_musica     = "Música: ON"
+    elif rect_musica.collidepoint(mouse_x, mouse_y):
+        cor_musica       = (80, 80, 160)
+        cor_borda_musica = (150, 150, 255)
+        texto_musica     = "Música: OFF"
+    else:
+        cor_musica       = (40, 40, 100)
+        cor_borda_musica = (150, 150, 255)
+        texto_musica     = "Música: OFF"
+    pygame.draw.rect(superficie, cor_musica, rect_musica, border_radius=10)
+    pygame.draw.rect(superficie, cor_borda_musica, rect_musica, 2, border_radius=10)
+    txt_musica = fonte_musica.render(texto_musica, True, (255, 255, 255))
+    superficie.blit(txt_musica, (bx_musica - txt_musica.get_width() // 2, by_musica - txt_musica.get_height() // 2))
+
+    return retangulos_vel, retangulos_amb, rect_voltar, rect_alien, rect_musica
+
+
+# =====================================================================
+# LOOP PRINCIPAL
+# Controla qual tela esta ativa (menu, configuracoes ou jogo).
+# No jogo: processa eventos de teclado, atualiza o carro e obstaculos,
+# verifica colisoes, desenha tudo na superficie virtual e aplica
+# o zoom 2x para a janela final.
+# =====================================================================
 jogo_rodando = True
 
 while jogo_rodando:
     dt = clock.tick(FPS) / 1000.0
 
     if tela_atual == "menu":
-        rect_iniciar,rect_config,rect_fechar = desenhar_menu(window)
+        rect_iniciar, rect_config, rect_fechar = desenhar_menu(window)
         pygame.display.update()
+
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: jogo_rodando=False
+            if event.type == pygame.QUIT:
+                jogo_rodando = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    if rect_iniciar.collidepoint(event.pos): iniciar_partida(); tela_atual="jogo"
-                    if rect_config.collidepoint(event.pos): tela_atual="configuracoes"
-                    if rect_fechar.collidepoint(event.pos): jogo_rodando=False
+                    if rect_iniciar.collidepoint(event.pos):
+                        iniciar_partida()
+                        tela_atual = "jogo"
+                    if rect_config.collidepoint(event.pos):
+                        tela_atual = "configuracoes"
+                    if rect_fechar.collidepoint(event.pos):
+                        jogo_rodando = False
 
     elif tela_atual == "configuracoes":
-        retangulos_vel,retangulos_amb,rect_voltar,rect_alien = desenhar_configuracoes(window)
+        retangulos_vel, retangulos_amb, rect_voltar, rect_alien, rect_musica = desenhar_configuracoes(window)
         pygame.display.update()
+
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: jogo_rodando=False
+            if event.type == pygame.QUIT:
+                jogo_rodando = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    for rect,kmh in retangulos_vel:
-                        if rect.collidepoint(event.pos): vel_inicial_kmh=kmh
-                    for rect,nome in retangulos_amb:
-                        if rect.collidepoint(event.pos): ambiente_escolhido=nome
-                    if rect_alien.collidepoint(event.pos): modo_alien=not modo_alien
-                    if rect_voltar.collidepoint(event.pos): tela_atual="menu"
+                    for rect, kmh in retangulos_vel:
+                        if rect.collidepoint(event.pos):
+                            vel_inicial_kmh = kmh
+                    for rect, nome in retangulos_amb:
+                        if rect.collidepoint(event.pos):
+                            ambiente_escolhido = nome
+                    if rect_alien.collidepoint(event.pos):
+                        if modo_alien == False:
+                            modo_alien = True
+                        else:
+                            modo_alien = False
+                    if rect_musica.collidepoint(event.pos):
+                        if musica_ativa == False:
+                            musica_ativa = True
+                            pygame.mixer.music.play(-1)
+                        else:
+                            musica_ativa = False
+                            pygame.mixer.music.stop()
+                    if rect_voltar.collidepoint(event.pos):
+                        tela_atual = "menu"
 
     elif tela_atual == "jogo":
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: jogo_rodando=False
+            if event.type == pygame.QUIT:
+                jogo_rodando = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r: iniciar_partida()
-                if event.key == pygame.K_m and game_over: tela_atual="menu"
+                if event.key == pygame.K_r:
+                    iniciar_partida()
+                if event.key == pygame.K_m and game_over:
+                    tela_atual = "menu"
                 if game_over == False:
                     if event.key == pygame.K_a:
-                        carro.mudar_faixa(-1); notificar_aliens(obstaculos,carro.faixa)
+                        carro.mudar_faixa(-1)
+                        notificar_aliens(obstaculos, carro.faixa)
                     if event.key == pygame.K_d:
-                        carro.mudar_faixa(+1); notificar_aliens(obstaculos,carro.faixa)
+                        carro.mudar_faixa(+1)
+                        notificar_aliens(obstaculos, carro.faixa)
 
         if game_over == False:
             carro.update()
-            cam_x=cam_x+(carro.x-VIRT_W//2-cam_x)*0.10
-            cam_y=cam_y+(carro.y-VIRT_H//2-cam_y)*0.10
-            atualizar_obstaculos(obstaculos,dt,carro.faixa)
+            cam_x = cam_x + (carro.x - VIRT_W // 2 - cam_x) * 0.10
+            cam_y = cam_y + (carro.y - VIRT_H // 2 - cam_y) * 0.10
+            atualizar_obstaculos(obstaculos, dt, carro.faixa)
             if carro.voltas > voltas_ant:
-                voltas_ant=carro.voltas
-                obstaculos=gerar_obstaculos(carro.pontos,voltas=carro.voltas)
-            if verificar_colisao(carro.x,carro.y,carro.indice,carro.pontos,obstaculos):
-                game_over=True
-                if carro.pontuacao > maior_recorde: maior_recorde=carro.pontuacao
+                voltas_ant = carro.voltas
+                obstaculos = gerar_obstaculos(carro.pontos, voltas=carro.voltas)
+            if verificar_colisao(carro.x, carro.y, carro.indice, carro.pontos, obstaculos):
+                game_over = True
+                if carro.pontuacao > maior_recorde:
+                    maior_recorde = carro.pontuacao
 
         if ambiente_atual == "Marte":
             virtual.fill((201, 73, 50))
@@ -1085,15 +1330,13 @@ while jogo_rodando:
         else:
             virtual.fill(CORES_AMBIENTE[ambiente_atual])
 
-        # Mar: sprites ANTES da pista (ficam embaixo)
         if ambiente_atual == "Mar":
             desenhar_sprites_fundo(virtual, posicoes_sprites, imagem_mar1, cam_x, cam_y)
 
-        desenhar_pista(virtual,segmentos,cam_x,cam_y)
-        desenhar_obstaculos(virtual,carro.pontos,obstaculos,cam_x,cam_y)
-        carro.desenhar(virtual,cam_x,cam_y)
+        desenhar_pista(virtual, segmentos, cam_x, cam_y)
+        desenhar_obstaculos(virtual, carro.pontos, obstaculos, cam_x, cam_y)
+        carro.desenhar(virtual, cam_x, cam_y)
 
-        # Terra, Lua, Marte: sprites DEPOIS da pista (ficam em cima da grama, fora da pista)
         if ambiente_atual == "Terra":
             desenhar_sprites_frente(virtual, posicoes_sprites, imagem_terra1, cam_x, cam_y)
         elif ambiente_atual == "Lua":
@@ -1101,9 +1344,10 @@ while jogo_rodando:
         elif ambiente_atual == "Marte":
             desenhar_sprites_frente(virtual, posicoes_sprites, imagem_marte1, cam_x, cam_y)
 
-        desenhar_hud(virtual,carro)
-        if game_over: desenhar_game_over(virtual,carro.pontuacao,carro.voltas)
-        pygame.transform.scale(virtual,(WIDTH,HEIGHT),window)
+        desenhar_hud(virtual, carro)
+        if game_over:
+            desenhar_game_over(virtual, carro.pontuacao, carro.voltas)
+        pygame.transform.scale(virtual, (WIDTH, HEIGHT), window)
         pygame.display.update()
 
 pygame.quit()
